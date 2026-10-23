@@ -162,7 +162,14 @@ ufw default allow outgoing >/dev/null
 if [[ "$SSH_ALLOW_FROM" == "any" ]]; then ufw allow 22/tcp comment 'SSH' >/dev/null
 else ufw allow from "$SSH_ALLOW_FROM" to any port 22 proto tcp comment 'SSH admin' >/dev/null; fi
 ufw allow 80/tcp comment 'Kids Stream HTTP' >/dev/null
+# Trava de segurança: só ativa se as regras de SSH e HTTP estiverem de fato registradas
+ufw show added | grep -q 'port 22' || die "Regra de SSH não registrada no UFW; firewall NÃO ativado (evita perder o acesso)."
+ufw show added | grep -q 'allow 80/tcp' || die "Regra HTTP não registrada no UFW; firewall NÃO ativado."
+# Reversão automática em 5 min caso o acesso seja perdido; cancelada abaixo após validar o SSH/HTTP
+systemctl stop kidsstream-ufw-rollback.timer >/dev/null 2>&1 || true
+systemd-run --quiet --unit=kidsstream-ufw-rollback --on-active=300 /usr/sbin/ufw --force disable
 ufw --force enable >/dev/null
+ufw status | grep -qE '^22/tcp|^22 ' || die "Regra de SSH ausente após ativação."
 ok "UFW ativo: 22/tcp (${SSH_ALLOW_FROM}) e 80/tcp"
 
 ADMIN_IP="${SSH_CLIENT%% *}"
@@ -195,6 +202,13 @@ check "HTTP / responde 200"      "curl -fsS -o /dev/null http://127.0.0.1/"
 check "HTTP /login responde 200" "curl -fsS -o /dev/null http://127.0.0.1/login"
 check "/config não exposto"      "[[ \$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1/config/.env) != 200 ]]"
 check "UFW ativo"                "ufw status | grep -q 'Status: active'"
+
+if (( FAIL == 0 )); then
+  systemctl stop kidsstream-ufw-rollback.timer >/dev/null 2>&1 || true
+  ok "reversão automática do firewall cancelada"
+else
+  echo "${c_err}Falhas detectadas: o firewall será desativado automaticamente em até 5 min (rollback de segurança).${c_off}"
+fi
 
 IPS="$(hostname -I 2>/dev/null | xargs)"
 echo
