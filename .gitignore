@@ -1,0 +1,10 @@
+.env
+config/*.local.php
+storage/logs/*
+storage/cache/*
+storage/mail/*
+public/uploads/*
+!public/uploads/.gitkeep
+!storage/**/.gitkeep
+docs/private/
+*.log
