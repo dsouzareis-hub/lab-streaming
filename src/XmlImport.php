@@ -51,7 +51,7 @@ final class XmlImport
         self::installLoader();
         $prev = libxml_use_internal_errors(true);
         $doc = new DOMDocument();
-        $ok = @$doc->loadXML($xml, LIBXML_NOENT | LIBXML_DTDLOAD | LIBXML_DTDATTLIST);
+        $ok = @$doc->loadXML($xml, LIBXML_NOENT | LIBXML_DTDLOAD);
         $err = libxml_get_last_error();
         libxml_clear_errors();
         libxml_use_internal_errors($prev);
