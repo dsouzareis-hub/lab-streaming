@@ -93,6 +93,9 @@ CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8m
 CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';
 ALTER USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';
 GRANT SELECT,INSERT,UPDATE,DELETE ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost';
+CREATE USER IF NOT EXISTS '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${DB_PASS}';
+ALTER USER '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${DB_PASS}';
+GRANT SELECT,INSERT,UPDATE,DELETE ON \`${DB_NAME}\`.* TO '${DB_USER}'@'127.0.0.1';
 FLUSH PRIVILEGES;
 SQL
 mariadb "$DB_NAME" -e "CREATE TABLE IF NOT EXISTS schema_migrations (name VARCHAR(190) PRIMARY KEY, applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB"
@@ -163,7 +166,7 @@ if [[ "$SSH_ALLOW_FROM" == "any" ]]; then ufw allow 22/tcp comment 'SSH' >/dev/n
 else ufw allow from "$SSH_ALLOW_FROM" to any port 22 proto tcp comment 'SSH admin' >/dev/null; fi
 ufw allow 80/tcp comment 'Kids Stream HTTP' >/dev/null
 # Trava de segurança: só ativa se as regras de SSH e HTTP estiverem de fato registradas
-ufw show added | grep -q 'port 22' || die "Regra de SSH não registrada no UFW; firewall NÃO ativado (evita perder o acesso)."
+ufw show added | grep -qE '22/tcp|port 22' || die "Regra de SSH não registrada no UFW; firewall NÃO ativado (evita perder o acesso)."
 ufw show added | grep -q 'allow 80/tcp' || die "Regra HTTP não registrada no UFW; firewall NÃO ativado."
 # Reversão automática em 5 min caso o acesso seja perdido; cancelada abaixo após validar o SSH/HTTP
 systemctl stop kidsstream-ufw-rollback.timer >/dev/null 2>&1 || true
