@@ -13,7 +13,7 @@ return [
     ['Shrek', 'Um ogro rabugento resgata uma princesa e descobre que nem tudo é como nos contos de fadas.', 'Comédia', 'L', 2001, 'CwXOrWvPBPk'],
     ['Zootopia', 'Uma coelha policial e uma raposa golpista investigam um mistério na cidade dos animais.', 'Família', 'L', 2016, 'jWM0ct-OLsM'],
     ['Encanto', 'Em uma casa mágica na Colômbia, Mirabel é a única da família sem um dom especial.', 'Musical', 'L', 2021, 'CaimKeDcudo'],
-    ['Meu Malvado Favorito', 'Um vilão ambicioso planeja roubar a Lua, mas três órfãs mudam seus planos.', 'Comédia', 'L', 2010, 'zzCZ1W_CWI0'],
+    ['Meu Malvado Favorito 3', 'Gru descobre que tem um irmão gêmeo e enfrenta um novo vilão saído dos anos 80.', 'Comédia', 'L', 2017, '6DBi41reeF0'],
     ['Up: Altas Aventuras', 'Um senhor viúvo amarra balões à casa e parte para a América do Sul com um escoteiro de carona.', 'Aventura', 'L', 2009, 'ORFWdXl_zJ4'],
     ['Minions', 'Os Minions procuram um novo mestre e acabam na Londres dos anos 60.', 'Comédia', 'L', 2015, 'eisKxhjBnZ0'],
 ];
