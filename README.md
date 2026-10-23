@@ -42,3 +42,20 @@ As senhas das contas de demonstração são geradas aleatoriamente e gravadas em
 ## Dependências externas
 
 Os trailers usam o player oficial do YouTube (`youtube-nocookie.com`) e as miniaturas vêm de `i.ytimg.com`; é necessária conexão com a internet no navegador dos usuários.
+
+## Testes automatizados
+
+```bash
+php tests/run.php                              # testes unitários
+APP_URL=http://192.168.3.30 php tests/run.php   # inclui testes de integração HTTP contra uma instância em execução
+```
+
+## Security Assessment
+
+Este laboratório foi criado para uma competição de Cyber Security e contém vulnerabilidades
+intencionais, delimitadas a dados e operações fictícios. O código é público — a avaliação não
+depende de obscuridade. Procedimentos de exploração e gabaritos não fazem parte deste repositório.
+
+## Limitações conhecidas
+
+Ver [docs/known-limitations.md](docs/known-limitations.md).
