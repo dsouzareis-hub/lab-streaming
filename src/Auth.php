@@ -22,17 +22,18 @@ final class Auth
 
     private const DUMMY_HASH = '$2y$12$abcdefghijklmnopqrstuuG5gq9nQ1pJm0yKQ0r5r2q3r2q3r2q3r';
 
+    private static array|null|false $cache = false;
+
     public static function user(): ?array
     {
-        static $cache = false;
-        if ($cache !== false) {
-            return $cache;
+        if (self::$cache !== false) {
+            return self::$cache;
         }
         $id = $_SESSION['uid'] ?? null;
-        $cache = $id
+        self::$cache = $id
             ? Db::one('SELECT id,name,email,role,avatar FROM users WHERE id=? AND active=1', [$id])
             : null;
-        return $cache;
+        return self::$cache;
     }
 
     public static function can(string $action): bool
@@ -58,12 +59,14 @@ final class Auth
     {
         session_regenerate_id(true);
         $_SESSION['uid'] = $uid;
+        self::$cache = false;
     }
 
     public static function logout(): void
     {
         $_SESSION = [];
         session_regenerate_id(true);
+        self::$cache = false;
     }
 
     public static function attempt(string $email, string $pass): bool
