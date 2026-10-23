@@ -1,0 +1,2 @@
+# Kids Stream - laboratorio: relatorio periodico (vulnerabilidade intencional de cron, ver docs/private)
+*/5 * * * * root /var/lib/kidsstream-lab/daily_report.sh >> /var/log/kidsstream-lab/report.log 2>&1

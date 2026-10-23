@@ -30,6 +30,15 @@ As senhas das contas de demonstração são geradas aleatoriamente e gravadas em
 | `scripts/` | Seed, verificação de vídeos, utilitários |
 | `config/.env.example` | Exemplo de configuração (o `.env` real nunca é versionado) |
 
+## Portas previstas no cenário
+
+| Porta | Serviço | Observação |
+|---|---|---|
+| 22/tcp | SSH administrativo | Acesso restrito conforme `SSH_ALLOW_FROM` |
+| 80/tcp | Aplicação Kids Stream (Apache) | Porta pública principal |
+| 8089/tcp | Serviço interno de laboratório | Exceção documentada e delimitada — ver `docs/private/vuln-03-exposed-service.md` |
+| 3306/tcp | MariaDB | Somente em `127.0.0.1`, nunca exposto à rede |
+
 ## Dependências externas
 
 Os trailers usam o player oficial do YouTube (`youtube-nocookie.com`) e as miniaturas vêm de `i.ytimg.com`; é necessária conexão com a internet no navegador dos usuários.

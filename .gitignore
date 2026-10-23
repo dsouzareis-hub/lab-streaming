@@ -6,5 +6,7 @@ storage/mail/*
 public/uploads/*
 !public/uploads/.gitkeep
 !storage/**/.gitkeep
+!storage/imports/
+!storage/imports/*
 docs/private/
 *.log

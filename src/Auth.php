@@ -18,6 +18,10 @@ final class Auth
         'message.read'    => ['admin'],
         'audit.read'      => ['admin'],
         'report.read'     => ['admin'],
+        'movie.import'    => ['collaborator', 'admin'],
+        'complaint.create' => ['client', 'admin'],
+        'complaint.view'  => ['client', 'admin'],
+        'complaint.manage' => ['admin'],
     ];
 
     private const DUMMY_HASH = '$2y$12$abcdefghijklmnopqrstuuG5gq9nQ1pJm0yKQ0r5r2q3r2q3r2q3r';

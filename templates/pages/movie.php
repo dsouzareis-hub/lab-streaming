@@ -34,5 +34,17 @@
 <h2>Avaliações</h2>
 <?php if (!$reviews): ?><p class="empty">Ainda não há avaliações com comentário.</p><?php endif; ?>
 <?php foreach ($reviews as $r): ?>
-  <p><strong><?= e($r['name']) ?></strong> — ★ <?= (int) $r['stars'] ?><br><?= e($r['comment']) ?></p>
+  <p><strong><?= e($r['name']) ?></strong> — ★ <?= (int) $r['stars'] ?><br><?= e($r['comment']) ?>
+  <?php if ($user && Auth::can('complaint.create') && (int) $r['user_id'] !== (int) $user['id']): ?>
+    <details><summary>Denunciar</summary>
+      <form method="post" action="/acao/denunciar"><?= Csrf::field() ?>
+        <input type="hidden" name="movie_id" value="<?= (int) $movie['id'] ?>">
+        <input type="hidden" name="rated_user_id" value="<?= (int) $r['user_id'] ?>">
+        <label for="reason-<?= (int) $r['user_id'] ?>">Motivo</label>
+        <textarea id="reason-<?= (int) $r['user_id'] ?>" name="reason" maxlength="500" required minlength="5"></textarea>
+        <button class="alt small">Enviar denúncia</button>
+      </form>
+    </details>
+  <?php endif; ?>
+  </p>
 <?php endforeach; ?>

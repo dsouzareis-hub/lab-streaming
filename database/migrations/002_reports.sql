@@ -1,0 +1,14 @@
+SET NAMES utf8mb4;
+CREATE TABLE IF NOT EXISTS reports (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  reporter_id INT UNSIGNED NOT NULL,
+  rated_user_id INT UNSIGNED NOT NULL,
+  movie_id INT UNSIGNED NOT NULL,
+  reason VARCHAR(500) NOT NULL,
+  status ENUM('pending','reviewed','dismissed') NOT NULL DEFAULT 'pending',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (rated_user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (movie_id) REFERENCES movies(id) ON DELETE CASCADE,
+  INDEX (reporter_id), INDEX (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

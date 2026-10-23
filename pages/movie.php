@@ -17,7 +17,7 @@ if ($user) {
     }
 }
 $reviews = Db::all(
-    'SELECT r.stars, r.comment, r.created_at, u.name FROM ratings r JOIN users u ON u.id=r.user_id
+    'SELECT r.stars, r.comment, r.created_at, u.id AS user_id, u.name FROM ratings r JOIN users u ON u.id=r.user_id
      WHERE r.movie_id=? AND r.comment IS NOT NULL AND r.comment<>"" ORDER BY r.created_at DESC LIMIT 20',
     [$movie['id']]
 );

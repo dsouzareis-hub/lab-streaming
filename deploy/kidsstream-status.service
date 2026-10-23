@@ -1,0 +1,24 @@
+[Unit]
+Description=Kids Stream - laboratorio: servico interno exposto (vulnerabilidade intencional)
+After=network.target
+
+[Service]
+Type=simple
+User=ksstatus
+Group=ksstatus
+ExecStart=/usr/bin/php -S 0.0.0.0:8089 -t /opt/kidsstream/scripts/internal-status /opt/kidsstream/scripts/internal-status/server.php
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ReadOnlyPaths=/opt/kidsstream
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+[Install]
+WantedBy=multi-user.target

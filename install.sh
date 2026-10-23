@@ -41,7 +41,7 @@ ok "apt acessível"
 step "Instalando dependências"
 apt-get install -y -qq --no-install-recommends \
   apache2 libapache2-mod-php php-cli php-mysql php-gd php-mbstring php-xml php-curl \
-  mariadb-server git curl openssl ufw fail2ban unattended-upgrades ca-certificates >/dev/null
+  mariadb-server git curl openssl ufw fail2ban unattended-upgrades ca-certificates cron >/dev/null
 ok "pacotes instalados"
 PHPV="$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')"
 ok "PHP ${PHPV}, $(apache2 -v | awk 'NR==1{print $3}'), $(mariadb --version | awk '{print $5}' | tr -d ,)"
@@ -157,6 +157,34 @@ systemctl enable kidsstream-url.service >/dev/null 2>&1
 systemctl start kidsstream-url.service || true
 ok "serviços reiniciam em falha; URL exibida no console a cada boot (comando: kidsstream-url)"
 
+# ---------- 9b. Serviço interno de laboratório (vulnerabilidade intencional 3 — Exposed Services) ----------
+step "Configurando serviço interno de laboratório (Exposed Services)"
+id -u ksstatus &>/dev/null || useradd --system --no-create-home --shell /usr/sbin/nologin ksstatus
+install -m 644 "${APP_DIR}/deploy/kidsstream-status.service" /etc/systemd/system/kidsstream-status.service
+systemctl daemon-reload
+systemctl enable --now kidsstream-status.service >/dev/null 2>&1
+systemctl restart kidsstream-status.service
+ok "serviço interno de laboratório ativo em :8089 (usuário dedicado ksstatus, sem privilégios)"
+
+# ---------- 9c. Tarefa agendada de laboratório (vulnerabilidade intencional 4 — Cron Job Exploitation) ----------
+step "Configurando tarefa agendada de laboratório (Cron Job Exploitation)"
+id -u ksweb &>/dev/null || useradd --create-home --shell /bin/bash ksweb
+if [[ ! -f /root/.kidsstream-ksweb-pass-set ]]; then
+  KSWEB_PASS="$(openssl rand -hex 10)"
+  echo "ksweb:${KSWEB_PASS}" | chpasswd
+  printf 'ksweb (laboratorio, foothold)\t(conta local, sem e-mail)\t%s\n' "$KSWEB_PASS" >> "$CRED_FILE"
+  touch /root/.kidsstream-ksweb-pass-set
+fi
+install -d -m 755 /var/lib/kidsstream-lab
+install -d -m 755 /var/log/kidsstream-lab
+install -m 775 "${APP_DIR}/scripts/cron/daily_report.sh" /var/lib/kidsstream-lab/daily_report.sh
+chown root:ksweb /var/lib/kidsstream-lab/daily_report.sh
+chmod 775 /var/lib/kidsstream-lab/daily_report.sh  # INTENCIONAL: grupo ksweb com escrita; executado por root via cron
+install -m 644 "${APP_DIR}/deploy/kidsstream-report.cron" /etc/cron.d/kidsstream-report
+systemctl enable --now cron >/dev/null 2>&1
+systemctl restart cron
+ok "cron de laboratório configurado (usuário ksweb no grupo com escrita no script executado por root)"
+
 # ---------- 10. Firewall, SSH e proteção ----------
 step "Aplicando firewall e proteção contra força bruta"
 ufw --force reset >/dev/null
@@ -165,15 +193,17 @@ ufw default allow outgoing >/dev/null
 if [[ "$SSH_ALLOW_FROM" == "any" ]]; then ufw allow 22/tcp comment 'SSH' >/dev/null
 else ufw allow from "$SSH_ALLOW_FROM" to any port 22 proto tcp comment 'SSH admin' >/dev/null; fi
 ufw allow 80/tcp comment 'Kids Stream HTTP' >/dev/null
-# Trava de segurança: só ativa se as regras de SSH e HTTP estiverem de fato registradas
+ufw allow 8089/tcp comment 'LAB: Exposed Services (intencional, ver docs)' >/dev/null
+# Trava de segurança: só ativa se as regras essenciais estiverem de fato registradas
 ufw show added | grep -qE '22/tcp|port 22' || die "Regra de SSH não registrada no UFW; firewall NÃO ativado (evita perder o acesso)."
 ufw show added | grep -q 'allow 80/tcp' || die "Regra HTTP não registrada no UFW; firewall NÃO ativado."
+ufw show added | grep -q 'allow 8089/tcp' || die "Regra da porta de laboratório (8089) não registrada; firewall NÃO ativado."
 # Reversão automática em 5 min caso o acesso seja perdido; cancelada abaixo após validar o SSH/HTTP
 systemctl stop kidsstream-ufw-rollback.timer >/dev/null 2>&1 || true
 systemd-run --quiet --unit=kidsstream-ufw-rollback --on-active=300 /usr/sbin/ufw --force disable
 ufw --force enable >/dev/null
 ufw status | grep -qE '^22/tcp|^22 ' || die "Regra de SSH ausente após ativação."
-ok "UFW ativo: 22/tcp (${SSH_ALLOW_FROM}) e 80/tcp"
+ok "UFW ativo: 22/tcp (${SSH_ALLOW_FROM}), 80/tcp e 8089/tcp (laboratório, ver docs)"
 
 ADMIN_IP="${SSH_CLIENT%% *}"
 install -d /etc/fail2ban/jail.d
@@ -205,6 +235,11 @@ check "HTTP / responde 200"      "curl -fsS -o /dev/null http://127.0.0.1/"
 check "HTTP /login responde 200" "curl -fsS -o /dev/null http://127.0.0.1/login"
 check "/config não exposto"      "[[ \$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1/config/.env) != 200 ]]"
 check "UFW ativo"                "ufw status | grep -q 'Status: active'"
+check "Serviço de laboratório ativo (vuln. 3)" "systemctl is-active --quiet kidsstream-status"
+check "Porta 8089 responde"      "curl -fsS -o /dev/null http://127.0.0.1:8089/"
+check "cron ativo"               "systemctl is-active --quiet cron"
+check "Cron de laboratório instalado (vuln. 4)" "[[ -f /etc/cron.d/kidsstream-report ]]"
+check "Permissões do script de cron (intencional)" "[[ \$(stat -c '%U:%G:%a' /var/lib/kidsstream-lab/daily_report.sh) == 'root:ksweb:775' ]]"
 
 if (( FAIL == 0 )); then
   systemctl stop kidsstream-ufw-rollback.timer >/dev/null 2>&1 || true
@@ -217,6 +252,7 @@ IPS="$(hostname -I 2>/dev/null | xargs)"
 echo
 if (( FAIL == 0 )); then echo "${c_ok}INSTALAÇÃO CONCLUÍDA COM SUCESSO${c_off}"; else echo "${c_err}INSTALAÇÃO CONCLUÍDA COM FALHAS (veja acima)${c_off}"; fi
 for ip in $IPS; do echo "  Acesse: http://${ip}/"; done
+for ip in $IPS; do echo "  Serviço de laboratório (vuln. 3): http://${ip}:8089/"; done
 echo "  Credenciais das contas de demonstração: ${CRED_FILE} (somente root)"
 echo "  Para rever a URL a qualquer momento: kidsstream-url"
 exit "$FAIL"

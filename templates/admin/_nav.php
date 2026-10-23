@@ -4,6 +4,7 @@
   <a class="btn small alt" href="/admin/usuarios">Usuários</a>
   <a class="btn small alt" href="/admin/generos">Gêneros</a>
   <a class="btn small alt" href="/admin/mensagens">Mensagens</a>
+  <a class="btn small alt" href="/admin/avaliacoes">Denúncias</a>
   <a class="btn small alt" href="/admin/relatorios">Relatórios</a>
   <a class="btn small alt" href="/admin/auditoria">Auditoria</a>
 </nav>
