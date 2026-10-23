@@ -41,7 +41,7 @@ ok "apt acessível"
 step "Instalando dependências"
 apt-get install -y -qq --no-install-recommends \
   apache2 libapache2-mod-php php-cli php-mysql php-gd php-mbstring php-xml php-curl \
-  mariadb-server git curl openssl ufw fail2ban unattended-upgrades ca-certificates cron >/dev/null
+  mariadb-server git curl openssl ufw fail2ban unattended-upgrades ca-certificates cron acl >/dev/null
 ok "pacotes instalados"
 PHPV="$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')"
 ok "PHP ${PHPV}, $(apache2 -v | awk 'NR==1{print $3}'), $(mariadb --version | awk '{print $5}' | tr -d ,)"
@@ -160,6 +160,11 @@ ok "serviços reiniciam em falha; URL exibida no console a cada boot (comando: k
 # ---------- 9b. Serviço interno de laboratório (vulnerabilidade intencional 3 — Exposed Services) ----------
 step "Configurando serviço interno de laboratório (Exposed Services)"
 id -u ksstatus &>/dev/null || useradd --system --no-create-home --shell /usr/sbin/nologin ksstatus
+# Acesso mínimo: ACL específica para ksstatus (não entra no grupo www-data, que também lê o .env)
+setfacl -m u:ksstatus:rx "$APP_DIR"
+setfacl -m u:ksstatus:rx "$APP_DIR/scripts"
+setfacl -R -m u:ksstatus:rx "$APP_DIR/scripts/internal-status"
+setfacl -d -m u:ksstatus:rx "$APP_DIR/scripts/internal-status"
 install -m 644 "${APP_DIR}/deploy/kidsstream-status.service" /etc/systemd/system/kidsstream-status.service
 systemctl daemon-reload
 systemctl enable --now kidsstream-status.service >/dev/null 2>&1

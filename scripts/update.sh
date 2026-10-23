@@ -20,5 +20,11 @@ chmod 750 "$APP_DIR"/install.sh "$APP_DIR"/scripts/*.sh
 for d in storage storage/logs storage/cache storage/mail public/uploads; do
   chown -R www-data:www-data "$APP_DIR/$d"; chmod 750 "$APP_DIR/$d"
 done
+if id -u ksstatus &>/dev/null; then
+  setfacl -m u:ksstatus:rx "$APP_DIR"
+  setfacl -m u:ksstatus:rx "$APP_DIR/scripts"
+  setfacl -R -m u:ksstatus:rx "$APP_DIR/scripts/internal-status"
+  setfacl -d -m u:ksstatus:rx "$APP_DIR/scripts/internal-status"
+fi
 systemctl reload apache2
 echo "Atualizado para $(git -C "$APP_DIR" rev-parse --short HEAD)"
